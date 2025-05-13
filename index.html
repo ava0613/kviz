@@ -148,7 +148,7 @@
                 </div>
             </div>
         </div>
-         <p id="progressText" class="mt-4 text-gray-600 text-center">1 / 10 Kérdés</p>
+         <p id="progressText" class="mt-4 text-gray-600 text-center">1 / 5 Kérdés</p>
          <button id="restartButton" class="mt-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-auto block">Újraindítás</button>
          <canvas id="histogramCanvas" class="hidden mt-8"></canvas>
     </div>
@@ -163,13 +163,119 @@
             { question: "Ki volt a legendás magyar király, akinek a nevéhez fűződik a 'táltos' alakja?", answer: "Mátyás király" },
             { question: "Melyik híres híd köti össze Budát és Pestet?", answer: "Lánchíd" },
             { question: "Mi volt a neve az első magyar nyomtatott könyvnek?", answer: "Chronica Hungarorum" },
-            { question: "Ki alapította a Magyar Honfoglalás után a magyar államot?", answer: "Árpád fejedelem" }
+            { question: "Ki alapította a Magyar Honfoglalás után a magyar államot?", answer: "Árpád fejedelem" },
+            { question: "Melyik csata volt a törökök ellen 1552-ben?", answer: "Egri vár védelme" },
+            { question: "Ki volt a törökellenes harcok híres alakja, akit 'törökverő'-nek is neveztek?", answer: "Hunyadi János" },
+            { question: "Melyik évben történt a pozsonyi csata?", answer: "907" },
+            { question: "Ki volt az első keresztény magyar király?", answer: "Szent István" },
+            { question: "Melyik folyó választja ketté a fővárost?", answer: "Duna" },
+            { question: "Ki volt a 16. századi magyar történetírás kiemelkedő alakja?", answer: "Heltai Gáspár" },
+            { question: "Melyik várost ostromolták sikertelenül a törökök 1596-ban?", answer: "Eger" },
+            { question: "Ki volt a híres kuruc vezér?", answer: "Rákóczi Ferenc" },
+            { question: "Melyik béke zárta le a Rákóczi-szabadságharcot?", answer: "Szatmári béke" },
+            { question: "Melyik épület a magyar Országgyűlés székhelye?", answer: "Országház" },
+            { question: "Ki volt a dualizmus korának meghatározó politikusa?", answer: "Deák Ferenc" },
+             { question: "Melyik évben történt a muhi csata?", answer: "1241" },
+            { question: "Ki volt a honfoglaló magyarok vezére?", answer: "Árpád" },
+            { question: "Melyik király alapította a pannonhalmi apátságot?", answer: "Szent István" },
+            { question: "Melyik évben koronázták meg Szent Istvánt?", answer: "1000" },
+            { question: "Melyik folyó mentén zajlott a honfoglalás?", answer: "Duna" },
+            { question: "Ki volt a tatárjárás idején a magyar király?", answer: "IV. Béla" },
+            { question: "Melyik vár állt ellen a törököknek 1552-ben?", answer: "Eger" },
+            { question: "Ki volt a törökellenes harcok egyik hőse?", answer: "Dobó István" },
+            { question: "Melyik évben történt a zsigetvári ostrom?", answer: "1566" },
+            { question: "Ki vezette a lutheránus reformációt Magyarországon?", answer: "Dévai Bíró Mátyás" },
+            { question: "Melyik erdélyi fejedelem támogatta a reformációt?", answer: "János Zsigmond" },
+            { question: "Melyik évben tört ki a Bocskai-felkelés?", answer: "1604" },
+            { question: "Ki volt a hajdúk vezére a 17. században?", answer: "Bocskai István" },
+            { question: "Melyik béke biztosította a vallásszabadságot a 17. században?", answer: "Bécsi béke" },
+            { question: "Ki volt a Wesselényi-összeesküvés vezetője?", answer: "Wesselényi Ferenc" },
+            { question: "Melyik felkelés zajlott a 17. század végén és a 18. század elején?", answer: "Rákóczi-szabadságharc" },
+            { question: "Ki volt a Rákóczi-szabadságharc vezére?", answer: "II. Rákóczi Ferenc" },
+            { question: "Melyik évben kezdődött a Rákóczi-szabadságharc?", answer: "1703" },
+            { question: "Melyik csatában győzték le a kurucokat a labancok?", answer: "trencséni csata" },
+            { question: "Melyik béke zárta le a Rákóczi-szabadságharcot?", answer: "szatmári béke" },
+            { question: "Ki volt a felvilágosult abszolutizmus képviselője Magyarországon?", answer: "Mária Terézia" },
+            { question: "Melyik rendeletéről híres II. József?", answer: "türelmi rendelet" },
+            { question: "Ki volt a magyar jakobinus mozgalom vezetője?", answer: "Martinovics Ignác" },
+            { question: "Melyik évben végezték ki Martinovicsékat?", answer: "1795" },
+            { question: "Ki volt a reformkor egyik vezető alakja?", answer: "Széchenyi István" },
+            { question: "Melyik híd építésével kötődik össze Széchenyi neve?", answer: "Lánchíd" },
+            { question: "Ki volt a reformkor másik nagy alakja, aki a radikálisabb irányzatot képviselte?", answer: "Kossuth Lajos" },
+            { question: "Melyik lapot szerkesztette Kossuth?", answer: "Pesti Hírlap" },
+            { question: "Melyik évben tört ki a forradalom Pesten?", answer: "1848" },
+            { question: "Melyik volt a márciusi ifjak követeléseinek összefoglaló neve?", answer: "12 pont" },
+            { question: "Ki szavalta el a Nemzeti dalt a Nemzeti Múzeum lépcsőjén?", answer: "Petőfi Sándor" },
+            { question: "Ki volt az 1848-49-es szabadságharc kormányzója?", answer: "Kossuth Lajos" },
+            { question: "Melyik csatában szenvedett döntő vereséget a magyar sereg 1849-ben?", answer: "temesvári csata" },
+            { question: "Hol tette le a fegyvert a magyar sereg 1849-ben?", answer: "Világos" },
+            { question: "Ki volt a megtorlásokkal fémjelzett időszak vezetője?", answer: "Haynau" },
+            { question: "Melyik évben történt a kiegyezés?", answer: "1867" },
+            { question: "Ki volt a kiegyezés egyik fő alakja?", answer: "Deák Ferenc" },
+            { question: "Melyik uralkodóval jött létre a kiegyezés?", answer: "Ferenc József" },
+            { question: "Melyik volt a dualista állam neve?", answer: "Osztrák-Magyar Monarchia" },
+            { question: "Melyik évben koronázták meg Ferenc Józsefet magyar királlyá?", answer: "1867" },
+            { question: "Ki volt a millenniumi ünnepségek idején a miniszterelnök?", answer: "Bánffy Dezső" },
+            { question: "Melyik évben volt a millenniumi ünnepség?", answer: "1896" },
+            { question: "Melyik épületet emelték a millenniumi ünnepségek alkalmából?", answer: "Országház" },
+            { question: "Ki volt a századforduló híres költője?", answer: "Ady Endre" },
+            { question: "Melyik folyóparti város volt a századforduló művészeti életének egyik központja?", answer: "Nagyvárad" },
+            { question: "Ki volt az első világháború idején a miniszterelnök?", answer: "Tisza István" },
+            { question: "Melyik évben tört ki az első világháború?", answer: "1914" },
+            { question: "Melyik békeszerződés csonkította meg Magyarországot?", answer: "trianoni békeszerződés" },
+            { question: "Melyik évben írták alá a trianoni békeszerződést?", answer: "1920" },
+            { question: "Ki volt a Horthy-korszak vezetője?", answer: "Horthy Miklós" },
+            { question: "Milyen államforma volt Magyarország a Horthy-korszakban?", answer: "király nélküli királyság" },
+            { question: "Melyik irodalmi irányzat volt meghatározó a két világháború között?", answer: "népi írók" },
+            { question: "Ki volt a második világháború idején a miniszterelnök?", answer: "Teleki Pál" },
+            { question: "Melyik évben lépett be Magyarország a második világháborúba?", answer: "1941" },
+            { question: "Melyik zsidóellenes törvényt hozták Magyarországon a második világháború alatt?", answer: "zsidótörvények" },
+            { question: "Melyik évben történt a német megszállás?", answer: "1944" },
+            { question: "Ki volt a nyilasok vezére?", answer: "Szálasi Ferenc" },
+            { question: "Melyik évben szabadult fel Budapest?", answer: "1945" },
+            { question: "Melyik párt nyerte a választásokat 1945-ben?", answer: "Független Kisgazdapárt" },
+            { question: "Melyik évben alakult meg a Magyar Népköztársaság?", answer: "1949" },
+            { question: "Ki volt a Rákosi-korszak vezetője?", answer: "Rákosi Mátyás" },
+            { question: "Melyik koncepciós per áldozata volt Rajk László?", answer: "Rajk-per" },
+            { question: "Melyik évben tört ki az 1956-os forradalom?", answer: "1956" },
+            { question: "Ki volt az 1956-os forradalom miniszterelnöke?", answer: "Nagy Imre" },
+            { question: "Melyik szovjet vezető nevéhez fűződik a Kádár-korszak?", answer: "Hruscsov" },
+            { question: "Melyik évben történt a rendszerváltás?", answer: "1989-1990" },
+            { question: "Ki volt az első szabadon választott köztársasági elnök a rendszerváltás után?", answer: "Göncz Árpád" },
+            { question: "Melyik évben csatlakozott Magyarország a NATO-hoz?", answer: "1999" },
+            { question: "Melyik évben lépett be Magyarország az Európai Unióba?", answer: "2004" },
+            { question: "Ki volt az első magyar űrhajós?", answer: "Farkas Bertalan" },
+            { question: "Melyik évben járt először magyar űrhajós a világűrben?", answer: "1980" },
+            { question: "Melyik híres magyar sportoló nyert 10 olimpiai bajnoki címet?", answer: "Gerevich Aladár" },
+            { question: "Melyik magyar város ad otthont a Forma-1-es Magyar Nagydíjnak?", answer: "Mogyoród" },
+            { question: "Melyik évben rendezték az első Forma-1-es Magyar Nagydíjat?", answer: "1986" },
+            { question: "Melyik magyar zeneszerző írta a 'Kállai kettős'-t?", answer: "Kodály Zoltán" },
+            { question: "Melyik híres magyar néptáncegyüttes alapítója volt Novák Ferenc?", answer: "Honvéd Együttes" },
+            { question: "Melyik magyar filmrendező nyert Oscar-díjat a 'Mephisto' című filmért?", answer: "Szabó István" },
+            { question: "Melyik híres magyar fotóművész készített portrét a 20. század nagy alakjairól?", answer: "André Kertész" },
+            { question: "Melyik magyar származású tudós alkotta meg a hidrogénbombát?", answer: "Teller Ede" },
+            { question: "Melyik magyar matematikus nevéhez fűződik a számítógépelmélet alapjainak megteremtése?", answer: "Neumann János" },
+            { question: "Melyik magyar orvos fedezte fel a C-vitamint?", answer: "Szent-Györgyi Albert" },
+            { question: "Melyik magyar származású építész tervezte a New York-i MoMA épületét?", answer: "Breuer Marcell" },
+            { question: "Melyik magyar származású divattervező nevéhez fűződik a 'wrap dress'?", answer: "Diane von Fürstenberg" },
+            { question: "Melyik magyar származású színésznő nyert Oscar-díjat a 'Mefisto' és a 'Hanussen' című filmekben nyújtott alakításáért?", answer: "Mephisto" },
+            { question: "Melyik magyar származású bűvész volt Houdini művésznevén híres?", answer: "Houdini" },
+            { question: "Melyik magyar származású újságíró alapította a Pulitzer-díjat?", answer: "Pulitzer József" },
+            { question: "Melyik magyar származású filmproducer nevéhez fűződik a 'Casablanca' című film?", answer: "Curtiz Mihály" },
+            { question: "Melyik magyar festőművész festette a 'Szinyei Merse Pál és a majális' című képet?", answer: "Szinyei Merse Pál" },
+            { question: "Melyik magyar szobrász alkotta a budapesti Hősök terén látható szoborcsoportot?", answer: "Zala György" },
+            { question: "Melyik magyar építész tervezte a budapesti Keleti pályaudvart?", answer: "Rochlitz Gyula és Feketeházy János" },
+            { question: "Melyik magyar író írta az 'Egri csillagok' című regényt?", answer: "Gárdonyi Géza" },
+            { question: "Melyik magyar költő írta a 'Himnusz'-t?", answer: "Kölcsey Ferenc" },
+            { question: "Melyik magyar zeneszerző szerezte a 'Háry János' című daljátékot?", answer: "Kodály Zoltán" },
+            { question: "Melyik magyar festőművész festette az 'Öreg cigány' című képet?", answer: "Munkácsy Mihály" }
         ];
         let currentQuestionIndex = 0;
         let cardFlipped = false;
         let rightCount = 0;
         let wrongCount = 0;
-        const questionCount = quizData.length;
+        let currentQuestions = [];
+        const questionCount = 10;
         const quizCard = document.getElementById('quizCard');
         const questionText = document.getElementById('questionText');
         const answerText = document.getElementById('answerText');
@@ -191,8 +297,16 @@
         function getRandomColor() {
             return colors[Math.floor(Math.random() * colors.length)];
         }
+        function selectRandomQuestions() {
+            currentQuestions = [];
+            const allQuestions = [...quizData];
+            for (let i = 0; i < questionCount; i++) {
+                const randomIndex = Math.floor(Math.random() * allQuestions.length);
+                currentQuestions.push(allQuestions.splice(randomIndex, 1)[0]);
+            }
+        }
         function loadQuestion() {
-            const currentQuestion = quizData[currentQuestionIndex];
+            const currentQuestion = currentQuestions[currentQuestionIndex];
             questionText.textContent = currentQuestion.question;
             answerText.textContent = currentQuestion.answer;
             cardFlipped = false;
@@ -220,7 +334,7 @@
             }
         }
         function updateProgressText() {
-            progressText.textContent = `${currentQuestionIndex + 1} / ${quizData.length} Kérdés`;
+            progressText.textContent = `${currentQuestionIndex + 1} / ${questionCount} Kérdés`;
         }
         quizCard.addEventListener('click', () => {
             quizCard.classList.toggle('flipped');
@@ -253,7 +367,7 @@
             setTimeout(() => {
                 currentCard.classList.remove('slide-out-left', 'slide-out-right', 'flipped');
                 currentQuestionIndex++;
-                if (currentQuestionIndex < quizData.length) {
+                if (currentQuestionIndex < currentQuestions.length) {
                     loadQuestion();
                     quizCard.classList.add('pop-in');
                     setTimeout(() => {
@@ -270,6 +384,7 @@
                             currentQuestionIndex = 0;
                             rightCount = 0;
                             wrongCount = 0;
+                            selectRandomQuestions();
                             loadQuestion();
                             nextButton.textContent = "Következő Kérdés";
                         };
@@ -331,8 +446,10 @@
             currentQuestionIndex = 0;
             rightCount = 0;
             wrongCount = 0;
+            selectRandomQuestions();
             loadQuestion();
         });
+        selectRandomQuestions();
         loadQuestion();
     </script>
 </body>
