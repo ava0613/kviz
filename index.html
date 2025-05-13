@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kvíz Alkalmazás</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            perspective: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: transform 0.6s;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .card-front {
+            color: white;
+        }
+        .card-back {
+            color: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .result-button {
+            margin: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 80%;
+            text-align: center;
+        }
+        .right-button {
+            background-color: #4CAF50;
+        }
+        .right-button:hover {
+            background-color: #45a049;
+        }
+        .wrong-button {
+            background-color: #f44336;
+        }
+        .wrong-button:hover {
+            background-color: #d32f2f;
+        }
+        #histogramCanvas {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin: 2rem auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background-color: white;
+        }
+        .slide-out-right {
+            animation: slideOutRight 0.3s ease-in-out;
+            transform-origin: center left;
+        }
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(100%);
+            }
+        }
+        .slide-out-left {
+            animation: slideOutLeft 0.3s ease-in-out;
+            transform-origin: center right;
+        }
+        @keyframes slideOutLeft {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(-100%);
+            }
+        }
+        .pop-in {
+            animation: popIn 0.3s ease-in-out;
+            transform-origin: center;
+        }
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container mx-auto p-4">
+        <h1 class="text-3xl font-semibold text-gray-800 text-center mb-6">Kvíz Idő!</h1>
+        <div class="card w-full max-w-md h-64 mb-6" id="quizCard">
+            <div class="card-inner">
+                <div class="card-face card-front" id="cardFront">
+                    <h2 class="card-title">Kérdés</h2>
+                    <p id="questionText" class="text-lg font-medium p-4"></p>
+                </div>
+                <div class="card-face card-back" id="cardBack">
+                    <h2 class="card-title">Válasz</h2>
+                    <p id="answerText" class="text-lg p-4"></p>
+                    <div class="flex flex-col items-center w-full">
+                        <button class="result-button right-button" id="rightButton">Helyes</button>
+                        <button class="result-button wrong-button" id="wrongButton">Helytelen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+         <p id="progressText" class="mt-4 text-gray-600 text-center">1 / 10 Kérdés</p>
+         <button id="restartButton" class="mt-6 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mx-auto block">Újraindítás</button>
+         <canvas id="histogramCanvas" class="hidden mt-8"></canvas>
+    </div>
+    <script>
+        const quizData = [
+            { question: "Ki volt az első magyar király?", answer: "Szent István" },
+            { question: "Melyik évben volt a mohácsi csata?", answer: "1526" },
+            { question: "Ki volt a leghíresebb magyar költő, aki a 'Nemzeti dal'-t írta?", answer: "Petőfi Sándor" },
+            { question: "Melyik folyó folyik keresztül Budapesten?", answer: "Duna" },
+            { question: "Ki volt a magyar szabadságharc vezetője 1848-ban?", answer: "Kossuth Lajos" },
+            { question: "Melyik évben történt a kiegyezés Ausztriával?", answer: "1867" },
+            { question: "Ki volt a legendás magyar király, akinek a nevéhez fűződik a 'táltos' alakja?", answer: "Mátyás király" },
+            { question: "Melyik híres híd köti össze Budát és Pestet?", answer: "Lánchíd" },
+            { question: "Mi volt a neve az első magyar nyomtatott könyvnek?", answer: "Chronica Hungarorum" },
+            { question: "Ki alapította a Magyar Honfoglalás után a magyar államot?", answer: "Árpád fejedelem" }
+        ];
+        let currentQuestionIndex = 0;
+        let cardFlipped = false;
+        let rightCount = 0;
+        let wrongCount = 0;
+        const questionCount = quizData.length;
+        const quizCard = document.getElementById('quizCard');
+        const questionText = document.getElementById('questionText');
+        const answerText = document.getElementById('answerText');
+        const nextButton = document.getElementById('nextButton');
+        const prevButton = document.getElementById('prevButton');
+        const progressText = document.getElementById('progressText');
+        const cardFront = document.getElementById('cardFront');
+        const cardBack = document.getElementById('cardBack');
+        const rightButton = document.getElementById('rightButton');
+        const wrongButton = document.getElementById('wrongButton');
+        const histogramCanvas = document.getElementById('histogramCanvas');
+        const histogramCtx = histogramCanvas.getContext('2d');
+        let chartInstance = null;
+        const colors = [
+            'bg-red-500', 'bg-yellow-500', 'bg-green-500', 'bg-blue-500', 'bg-indigo-500',
+            'bg-purple-500', 'bg-pink-500', 'bg-orange-500', 'bg-teal-500', 'bg-cyan-500'
+        ];
+        const restartButton = document.getElementById('restartButton');
+        function getRandomColor() {
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        function loadQuestion() {
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionText.textContent = currentQuestion.question;
+            answerText.textContent = currentQuestion.answer;
+            cardFlipped = false;
+            quizCard.classList.remove('flipped');
+            const randomColor = getRandomColor();
+            cardFront.className = `card-face card-front ${randomColor}`;
+            cardBack.className = `card-face card-back ${randomColor} flex flex-col justify-around`;
+            if (nextButton) {
+                nextButton.disabled = true;
+                nextButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
+                nextButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+            }
+            if (prevButton) {
+                prevButton.style.display = 'none';
+            }
+            rightButton.disabled = false;
+            wrongButton.disabled = false;
+            rightButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            wrongButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            updateProgressText();
+            histogramCanvas.classList.add('hidden');
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+        }
+        function updateProgressText() {
+            progressText.textContent = `${currentQuestionIndex + 1} / ${quizData.length} Kérdés`;
+        }
+        quizCard.addEventListener('click', () => {
+            quizCard.classList.toggle('flipped');
+            cardFlipped = !cardFlipped;
+             if (nextButton && cardFlipped) {
+                nextButton.disabled = true;
+                nextButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+            }
+        });
+        rightButton.addEventListener('click', () => {
+            rightCount++;
+            handleAnswer(true);
+        });
+        wrongButton.addEventListener('click', () => {
+            wrongCount++;
+            handleAnswer(false);
+        });
+        function handleAnswer(isRight) {
+            rightButton.disabled = true;
+            wrongButton.disabled = true;
+            rightButton.classList.add('opacity-50', 'cursor-not-allowed');
+            wrongButton.classList.add('opacity-50', 'cursor-not-allowed');
+            cardFlipped = true;
+            const currentCard = quizCard;
+            if (isRight) {
+                currentCard.classList.add('flipped', 'slide-out-right');
+            } else {
+                currentCard.classList.add('flipped', 'slide-out-left');
+            }
+            setTimeout(() => {
+                currentCard.classList.remove('slide-out-left', 'slide-out-right', 'flipped');
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    loadQuestion();
+                    quizCard.classList.add('pop-in');
+                    setTimeout(() => {
+                        quizCard.classList.remove('pop-in');
+                    }, 300);
+                } else {
+                    displayResults();
+                    let percentage = (rightCount / questionCount) * 100;
+                    questionText.textContent = "Kvíz befejeződött!";
+                    answerText.textContent = `Helyes válaszok: ${rightCount} / ${questionCount}  (${percentage.toFixed(2)}%)`;
+                    if (nextButton) {
+                        nextButton.textContent = "Újraindítás";
+                        nextButton.onclick = () => {
+                            currentQuestionIndex = 0;
+                            rightCount = 0;
+                            wrongCount = 0;
+                            loadQuestion();
+                            nextButton.textContent = "Következő Kérdés";
+                        };
+                    }
+                    updateProgressText();
+                }
+            }, 300);
+        }
+        function displayResults() {
+            histogramCanvas.classList.remove('hidden');
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+            chartInstance = new Chart(histogramCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Helyes', 'Helytelen'],
+                    datasets: [{
+                        label: 'Eredmények',
+                        data: [rightCount, wrongCount],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(255, 99, 132, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Kvíz Eredmények',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        restartButton.addEventListener('click', () => {
+            currentQuestionIndex = 0;
+            rightCount = 0;
+            wrongCount = 0;
+            loadQuestion();
+        });
+        loadQuestion();
+    </script>
+</body>
+</html>
