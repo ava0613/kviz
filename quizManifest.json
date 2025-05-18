@@ -1,0 +1,22 @@
+[
+  {
+    "key": "erdelyKult",
+    "title": "Erdély",
+    "dataFile": "erdelyKult.csv"
+  },
+  {
+    "key": "hungarianHistory",
+    "title": "Magyar Történelem",
+    "dataFile": "hungarianHistory.csv"
+  },
+  {
+    "key": "hungarianLiterature",
+    "title": "Magyar Irodalom",
+    "dataFile": "hungarianLiterature.csv"
+  },
+  {
+    "key": "worldLiterature",
+    "title": "Világirodalom",
+    "dataFile": "worldLiterature.csv"
+  }
+]
