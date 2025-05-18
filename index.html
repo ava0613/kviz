@@ -217,6 +217,12 @@
         .h-64{
             height: 16rem;
         }
+        #questionText {
+         white-space: pre-wrap; /* Preserve spaces and line breaks, allow wrapping */
+        }
+        #answerText {
+         white-space: pre-wrap; /* Preserve spaces and line breaks, allow wrapping */
+        }
     </style>
 </head>
 <body class="bg-green-100 flex items-center justify-center min-h-screen">
@@ -321,76 +327,128 @@
             return questions;
         }
 
-        // Handles two columns (Question, Answer) with standard quoting rules
-        // Assumes fields containing commas or double quotes are enclosed in "double quotes".
-        // Assumes internal double quotes are escaped by doubling them ("").
+// IMPROVED CSV parsing function (State Machine)
+        // Correctly handles two columns (Question, Answer) with standard quoting rules,
+        // including multi-line fields and escaped double quotes ("").
+        // Assumes exactly two fields per record separated by a comma.
+        // Assumes the first line is a header and skips it.
         function parseCSV(text) {
-            const lines = text.trim().split('\n');
             const questions = [];
+            let currentField = ''; // Accumulates characters for the current field
+            let inQuotes = false; // State: are we currently inside a quoted field?
+            let fieldIndex = 0; // State: 0 for question, 1 for answer
+            let currentRecord = { question: null, answer: null }; // Buffer for the current record's fields
+            let isFirstLine = true; // Flag to skip the header row
 
-            // Process lines, skipping header (assuming first line is header)
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue; // Skip empty lines
 
-                let question = '';
-                let answer = '';
-                let inQuotes = false;
-                let fieldIndex = 0; // 0 for question, 1 for answer
-                let currentField = '';
+            // Append a newline at the end to ensure the very last record is processed correctly
+            // Check for both \n and \r\n endings
+            if (!text.endsWith('\n')) {
+                 if (text.endsWith('\r')) {
+                     text += '\n'; // Append \n if it ends with \r
+                 } else {
+                     text += '\r\n'; // Append \r\n for consistency
+                 }
+            } else if (text.endsWith('\n') && !text.endsWith('\r\n')) {
+                // If it ends with \n but not \r\n, ensure \r\n for consistent handling
+                 text = text.slice(0, -1) + '\r\n';
+            }
+            // Now text is guaranteed to end with \r\n (or is empty/header only)
 
-                for (let j = 0; j < line.length; j++) {
-                    const char = line[j];
 
-                    if (char === '"') {
-                        // Handle escaped quotes ""
-                        if (inQuotes && line[j + 1] === '"') {
-                            currentField += '"'; // Add a single quote
-                            j++; // Skip the next quote
-                        } else {
-                            inQuotes = !inQuotes; // Toggle quoting state
-                        }
-                    } else if (char === ',' && !inQuotes) {
-                        // Found the separator comma outside of quotes
-                        if (fieldIndex === 0) {
-                            question = currentField;
-                            currentField = ''; // Reset for the next field (answer)
-                            fieldIndex = 1;
-                        } else {
-                             // Should not happen in a 2-column CSV, indicates malformed line
-                             console.warn(`Skipping malformed CSV line (more than 2 fields): ${line}`);
-                             currentField = ''; // Reset and break
-                             break;
-                        }
-                    } else {
-                        // Add character to the current field
-                        currentField += char;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+                const charIsCRLF = (char === '\r' && nextChar === '\n');
+
+
+                if (isFirstLine) {
+                    // Skip characters until the first full line break (\n or \r\n)
+                    if (char === '\n') {
+                        isFirstLine = false;
+                        // If it was \r\n, the i++ in the main loop will handle skipping \n
                     }
+                    continue; // Skip header characters
                 }
 
-                // After the loop, the last field's content is in currentField
-                 if (fieldIndex === 1) {
-                     answer = currentField;
-                 } else {
-                      // Handle case where there was no separator, or only one field
-                      console.warn(`Skipping malformed CSV line (could not parse 2 fields): ${line}`);
-                      continue;
-                 }
+                // --- Process characters after the header ---
 
+                if (char === '"') {
+                    // Handle escaped double quotes "" inside a quoted field
+                    if (inQuotes && nextChar === '"') {
+                        currentField += '"'; // Add a single literal quote
+                        i++; // Consume the next quote character
+                    } else {
+                        // Toggle the quoting state
+                        inQuotes = !inQuotes;
+                        // Do NOT add the quote character itself to the field value
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    // Found a comma field separator OUTSIDE of quotes
+                    if (fieldIndex === 0) {
+                        currentRecord.question = currentField; // Store the accumulated question
+                        currentField = ''; // Reset for the next field (answer)
+                        fieldIndex = 1; // Move to the answer field
+                    } else {
+                        // Found a comma in the second field outside quotes.
+                        // In standard 2-column CSV, the second field should be quoted if it contains a comma.
+                        // This indicates malformed CSV if we're here. Append the character but warn.
+                         currentField += char;
+                         console.warn(`Non-standard comma found in unquoted second field at index ${i}. Line segment: "${text.substring(Math.max(0, i-20), Math.min(text.length, i+20))}"`);
+                    }
+                } else if ((char === '\n' && !inQuotes) || (charIsCRLF && !inQuotes)) {
+                    // Found a record separator (\n or \r\n) OUTSIDE of quotes - END OF RECORD
 
-                // Clean up leading/trailing whitespace from final fields
-                question = question.trim();
-                answer = answer.trim();
+                    // If it's \r\n, consume both characters
+                    if (charIsCRLF) {
+                        i++; // Skip the \n
+                    }
 
-                // Basic validation - ensure both fields have content
-                if (question && answer) {
-                     questions.push({ question: question, answer: answer });
-                } else {
-                     console.warn(`Skipping line with empty fields after parsing: ${line}`);
+                    // Process the content accumulated in currentField as the answer
+                    if (fieldIndex === 1) {
+                         currentRecord.answer = currentField;
+
+                         // Add the completed record if both fields were found and are not just whitespace
+                         if (currentRecord.question !== null && currentRecord.answer !== null &&
+                             currentRecord.question.trim() !== '' && currentRecord.answer.trim() !== '') {
+                             questions.push({
+                                 question: currentRecord.question.trim(),
+                                 answer: currentRecord.answer.trim()
+                             });
+                         } else {
+                             console.warn("Skipping record with incomplete or empty fields:", currentRecord);
+                         }
+
+                    } else {
+                         // Found newline outside quotes, but we weren't accumulating the second field.
+                         // This indicates a malformed line (e.g., only one field before the newline).
+                         console.warn(`Skipping malformed line (newline before 2nd field complete) at index ${i}. Content buffer: "${currentField}"`);
+                    }
+
+                    // Reset state for the next record
+                    currentField = '';
+                    fieldIndex = 0;
+                    currentRecord = { question: null, answer: null }; // Clear the record buffer
+
+                }
+                else {
+                    // Any other character: add it to the current field.
+                    // This correctly includes commas, newlines, etc., if inQuotes is true.
+                    currentField += char;
                 }
             }
+
+            // After the loop, currentField should be empty due to the appended newline.
+            // If not, it might indicate malformed data at the very end of the file.
+            // We'll add a warning but don't try to process incomplete data here.
+             if (currentField.trim() !== '' || inQuotes) {
+                 console.warn("CSV parse finished with unhandled data in buffer or unmatched quotes.");
+             }
+
+
             return questions;
         }
+
                          
 
         // --- Core Quiz Logic Functions ---

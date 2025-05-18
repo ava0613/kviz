@@ -15,6 +15,11 @@
     "dataFile": "hungarianLiterature.csv"
   },
   {
+    "key": "hungarianPoems",
+    "title": "Versek, idézetek",
+    "dataFile": "hungarianPoems.csv"
+  },
+  {
     "key": "worldLiterature",
     "title": "Világirodalom",
     "dataFile": "worldLiterature.csv"
