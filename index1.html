@@ -254,15 +254,12 @@
         </div>
          <canvas id="histogramCanvas" class="hidden mt-8"></canvas>
     </div>
- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // --- DOM Elements ---
         const quizCard = document.getElementById('quizCard');
         const questionText = document.getElementById('questionText');
         const answerText = document.getElementById('answerText');
-        // nextButton and prevButton were in HTML but not used in JS, keeping comments for clarity
-        // const nextButton = document.getElementById('nextButton');
-        // const prevButton = document.getElementById('prevButton');
         const progressText = document.getElementById('progressText');
         const cardFront = document.getElementById('cardFront');
         const cardBack = document.getElementById('cardBack');
@@ -274,17 +271,20 @@
         const menuCard = document.getElementById('menuCard');
         const quizTitle = document.getElementById('quizTitle');
         const backToMenuButton = document.getElementById('backToMenuButton');
-        const loadingIndicator = document.getElementById('loadingIndicator'); // New loading indicator
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        const buttonContainer = document.querySelector('.card-back .flex.flex-col.items-center.w-full');
+
 
         // --- State Variables ---
         let currentQuestionIndex = 0;
         let cardFlipped = false;
         let rightCount = 0;
         let wrongCount = 0;
-        let currentQuestions = []; // This will hold questions for the currently selected quiz
-        let allQuizzesManifest = []; // This will hold the loaded manifest data
+        let currentQuestions = [];
+        let allQuizzesManifest = [];
         let questionCount = 10; // Number of questions to show in a quiz round
-        let selectedQuizKey = null; // Key from the manifest for the current quiz
+        let selectedQuizKey = null;
         let chartInstance = null;
 
         // --- Constants ---
@@ -300,89 +300,56 @@
             return COLORS[Math.floor(Math.random() * COLORS.length)];
         }
 
-        // Simple CSV parsing - assumes no commas or quotes within fields
-        // For more complex CSV, consider a dedicated library
-        function oldparseCSV(text) {
-            const lines = text.trim().split('\n');
-            const questions = [];
-            // Assuming the first line is a header and skipping it
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line) {
-                    const parts = line.split(',');
-                    if (parts.length >= 2) { // Ensure at least question and answer parts exist
-                        questions.push({
-                            question: parts[0].trim(),
-                            answer: parts[1].trim()
-                        });
-                    }
-                }
-            }
-            return questions;
-        }
-
-        // Handles two columns (Question, Answer) with standard quoting rules
-        // Assumes fields containing commas or double quotes are enclosed in "double quotes".
-        // Assumes internal double quotes are escaped by doubling them ("").
+        // Improved CSV parsing function (same as before)
         function parseCSV(text) {
             const lines = text.trim().split('\n');
             const questions = [];
 
-            // Process lines, skipping header (assuming first line is header)
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (!line) continue; // Skip empty lines
+                if (!line) continue;
 
                 let question = '';
                 let answer = '';
                 let inQuotes = false;
-                let fieldIndex = 0; // 0 for question, 1 for answer
+                let fieldIndex = 0;
                 let currentField = '';
 
                 for (let j = 0; j < line.length; j++) {
                     const char = line[j];
 
                     if (char === '"') {
-                        // Handle escaped quotes ""
                         if (inQuotes && line[j + 1] === '"') {
-                            currentField += '"'; // Add a single quote
-                            j++; // Skip the next quote
+                            currentField += '"';
+                            j++;
                         } else {
-                            inQuotes = !inQuotes; // Toggle quoting state
+                            inQuotes = !inQuotes;
                         }
                     } else if (char === ',' && !inQuotes) {
-                        // Found the separator comma outside of quotes
                         if (fieldIndex === 0) {
                             question = currentField;
-                            currentField = ''; // Reset for the next field (answer)
+                            currentField = '';
                             fieldIndex = 1;
                         } else {
-                             // Should not happen in a 2-column CSV, indicates malformed line
                              console.warn(`Skipping malformed CSV line (more than 2 fields): ${line}`);
-                             currentField = ''; // Reset and break
+                             currentField = '';
                              break;
                         }
                     } else {
-                        // Add character to the current field
                         currentField += char;
                     }
                 }
 
-                // After the loop, the last field's content is in currentField
                  if (fieldIndex === 1) {
                      answer = currentField;
                  } else {
-                      // Handle case where there was no separator, or only one field
                       console.warn(`Skipping malformed CSV line (could not parse 2 fields): ${line}`);
                       continue;
                  }
 
-
-                // Clean up leading/trailing whitespace from final fields
                 question = question.trim();
                 answer = answer.trim();
 
-                // Basic validation - ensure both fields have content
                 if (question && answer) {
                      questions.push({ question: question, answer: answer });
                 } else {
@@ -391,15 +358,23 @@
             }
             return questions;
         }
-                         
+
 
         // --- Core Quiz Logic Functions ---
 
-        // Loads the manifest file and builds the menu
         async function loadManifestAndBuildMenu() {
-            menuCard.innerHTML = ''; // Clear existing menu buttons
+             if (!menuCard || !loadingIndicator || !quizTitle) {
+                 console.error("Error: Required DOM elements not found. Check IDs in HTML.");
+                 const container = document.querySelector('.container');
+                 if (container) {
+                     container.innerHTML = '<p class="text-red-600 text-center">Hiba: Az oldal nem töltődött be megfelelően. Hiányzó HTML elemek.</p>';
+                 }
+                 return;
+             }
+
+            menuCard.innerHTML = '';
             loadingIndicator.classList.remove('hidden');
-            quizTitle.textContent = 'Kvízek Betöltése...'; // Indicate loading
+            quizTitle.textContent = 'Kvízek Betöltése...';
 
             try {
                 const response = await fetch(MANIFEST_FILE);
@@ -409,37 +384,38 @@
                 allQuizzesManifest = await response.json();
 
                 loadingIndicator.classList.add('hidden');
-                quizTitle.textContent = 'Nagyi-Kvíz'; // Restore title
+                quizTitle.textContent = 'Kvíz Idő!';
 
                 if (allQuizzesManifest.length === 0) {
                     menuCard.innerHTML = '<p class="text-gray-600 text-center">Nincs elérhető kvíz a manifest fájlban.</p>';
                     return;
                 }
 
-                // Build menu buttons dynamically
                 allQuizzesManifest.forEach(quizMeta => {
                     const button = document.createElement('button');
                     button.classList.add('menu-button');
                     button.textContent = quizMeta.title;
-                    button.dataset.quizKey = quizMeta.key; // Use data-quiz-key to store the key
+                    button.dataset.quizKey = quizMeta.key;
                     menuCard.appendChild(button);
                 });
 
-                // Add event listener to the menu card for delegation
-                menuCard.addEventListener('click', handleMenuClick);
+                 if (!menuCard.dataset.listenerAttached) {
+                    menuCard.addEventListener('click', handleMenuClick);
+                    menuCard.dataset.listenerAttached = 'true';
+                 }
+
 
             } catch (error) {
                 console.error("Error loading manifest:", error);
                 loadingIndicator.classList.add('hidden');
                 quizTitle.textContent = 'Hiba Betöltéskor';
-                menuCard.innerHTML = '<p class="text-red-600 text-center">Nem sikerült betölteni a kvíz listát.</p>';
+                menuCard.innerHTML = '<p class="text-red-600 text-center">Nem sikerült betölteni a kvíz listát. Ellenőrizd a quizzes.json fájlt és az útvonalat.</p>';
             }
         }
 
-        // Handles click on menu buttons
         async function handleMenuClick(event) {
             const button = event.target.closest('.menu-button');
-            if (!button) return; // Not a menu button
+            if (!button) return;
 
             selectedQuizKey = button.dataset.quizKey;
             const quizMeta = allQuizzesManifest.find(q => q.key === selectedQuizKey);
@@ -449,7 +425,6 @@
                 return;
             }
 
-            // Transition from menu to loading state
             menuCard.classList.add('hidden');
             loadingIndicator.classList.remove('hidden');
             quizTitle.textContent = `${quizMeta.title} Betöltése...`;
@@ -458,45 +433,40 @@
             try {
                 currentQuestions = await loadQuizData(quizMeta.dataFile);
 
-                // Check if data was loaded successfully
                 if (!currentQuestions || currentQuestions.length === 0) {
                      loadingIndicator.classList.add('hidden');
                      quizTitle.textContent = `${quizMeta.title}`;
                      quizCard.classList.remove('hidden');
-                     displayNoQuestionsError(); // Display message if no questions found
-                     return; // Stop here if no questions
+                     displayNoQuestionsError(`Nincs elérhető kérdés ehhez a kvízhez (${quizMeta.dataFile}).`);
+                     return;
                 }
 
-                // Data loaded, start the quiz flow
                 loadingIndicator.classList.add('hidden');
                 quizCard.classList.remove('hidden');
                 progressText.classList.remove('hidden');
                 restartButton.classList.remove('hidden');
                 backToMenuButton.classList.remove('hidden');
-                quizTitle.textContent = `${quizMeta.title} Kvíz`; // Set quiz specific title
+                quizTitle.textContent = `${quizMeta.title} Kvíz`;
 
-                // Reset quiz state and start
                 currentQuestionIndex = 0;
                 rightCount = 0;
                 wrongCount = 0;
-                selectRandomQuestions(currentQuestions); // Select random subset from loaded data
-                loadQuestion();
+                selectRandomQuestions(currentQuestions);
+                loadQuestion(); // This will handle initial button state
 
             } catch (error) {
                 console.error(`Error loading or parsing data for ${quizMeta.dataFile}:`, error);
                  loadingIndicator.classList.add('hidden');
                  quizTitle.textContent = 'Hiba Betöltéskor';
-                 quizCard.classList.add('hidden'); // Hide quiz card in case of error
-                 menuCard.classList.remove('hidden'); // Show menu again
-                 // Optionally display an error message on the menu screen
+                 quizCard.classList.add('hidden');
+                 menuCard.classList.remove('hidden');
                  const errorDiv = document.createElement('p');
                  errorDiv.classList.add('text-red-600', 'text-center', 'mt-4');
-                 errorDiv.textContent = `Nem sikerült betölteni a kvíz adatokat: ${quizMeta.title}`;
+                 errorDiv.textContent = `Nem sikerült betölteni a kvíz adatokat: ${quizMeta.title}. Ellenőrizd az adatfájl (${quizMeta.dataFile}) formátumát.`;
                  menuCard.appendChild(errorDiv);
             }
         }
 
-        // Fetches and parses the CSV file
         async function loadQuizData(filePath) {
             try {
                 const response = await fetch(filePath);
@@ -507,29 +477,28 @@
                 return parseCSV(csvText);
             } catch (error) {
                 console.error(`Failed to fetch or parse CSV from ${filePath}:`, error);
-                throw error; // Re-throw to be caught by handleMenuClick
+                throw error;
             }
         }
 
 
         function selectRandomQuestions(allQuestions) {
-            // Ensure we don't request more questions than available
             const numToSelect = Math.min(questionCount, allQuestions.length);
-            currentQuestions = []; // Clear previous selection
-            const shuffledQuestions = [...allQuestions].sort(() => Math.random() - 0.5); // Shuffle
-            currentQuestions = shuffledQuestions.slice(0, numToSelect); // Select the first N
-             // Update questionCount based on actual selected questions
-             questionCount = currentQuestions.length;
+            currentQuestions = [];
+            const shuffledQuestions = [...allQuestions].sort(() => Math.random() - 0.5);
+            currentQuestions = shuffledQuestions.slice(0, numToSelect);
+            questionCount = currentQuestions.length; // Update questionCount based on actual selected questions
         }
 
 
         function loadQuestion() {
+            console.log("loadQuestion called for index:", currentQuestionIndex); // Log call
             if (!currentQuestions || currentQuestions.length === 0 || currentQuestionIndex >= currentQuestions.length) {
-                // This case should ideally be handled before calling loadQuestion if data is empty
-                // but as a fallback:
-                 displayNoQuestionsError();
-                 return;
+                console.log("loadQuestion: No more questions or data issue."); // Log condition
+                displayNoQuestionsError("Hiba: Nincs több kérdés.");
+                return;
             }
+            console.log("loadQuestion: Loading question", currentQuestionIndex + 1); // Log question load
 
             const currentQuestion = currentQuestions[currentQuestionIndex];
             questionText.textContent = currentQuestion.question;
@@ -537,22 +506,32 @@
 
             // Reset card state
             cardFlipped = false;
-            quizCard.classList.remove('flipped'); // Ensure card is not flipped
-            quizCard.classList.remove('slide-out-left', 'slide-out-right', 'pop-in'); // Remove animation classes
+            quizCard.classList.remove('flipped');
+            quizCard.classList.remove('slide-out-left', 'slide-out-right', 'pop-in');
 
             // Set random background color
             const randomColor = getRandomColorClass();
-            // Clear all existing background classes before adding the new one
-             cardFront.classList.forEach(cls => { if(cls.startsWith('bg-')) cardFront.classList.remove(cls); });
-             cardBack.classList.forEach(cls => { if(cls.startsWith('bg-')) cardBack.classList.remove(cls); });
+            cardFront.classList.forEach(cls => { if(cls.startsWith('bg-')) cardFront.classList.remove(cls); });
+            cardBack.classList.forEach(cls => { if(cls.startsWith('bg-')) cardBack.classList.remove(cls); });
             cardFront.classList.add(randomColor);
-            cardBack.classList.add(randomColor); // Apply same color to back for consistency
+            cardBack.classList.add(randomColor);
 
-            // Enable answer buttons
-            rightButton.disabled = false;
-            wrongButton.disabled = false;
-            rightButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            wrongButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            // *** Make buttons visible and enabled for the new question ***
+            if (buttonContainer && rightButton && wrongButton) {
+                 console.log("loadQuestion: Enabling buttons."); // Log button enabling attempt
+                 buttonContainer.style.display = 'flex';
+                 rightButton.style.display = '';
+                 wrongButton.style.display = '';
+                 rightButton.disabled = false; // Re-enable buttons
+                 wrongButton.disabled = false; // Re-enable buttons
+                 rightButton.classList.remove('opacity-50', 'cursor-not-allowed'); // Remove dimming
+                 wrongButton.classList.remove('opacity-50', 'cursor-not-allowed'); // Remove dimming
+                 cardBack.style.backfaceVisibility = 'hidden'; // Ensure backface is hidden when card is not flipped visually (standard state)
+            } else {
+                 console.error("Error: Button container or buttons not found during question load.");
+            }
+            // ***********************************************************
+
 
             // Hide the histogram
             histogramCanvas.classList.add('hidden');
@@ -574,17 +553,19 @@
 
         function handleAnswer(isRight) {
             // Disable answer buttons immediately
-            rightButton.disabled = true;
-            wrongButton.disabled = true;
-            rightButton.classList.add('opacity-50', 'cursor-not-allowed');
-            wrongButton.classList.add('opacity-50', 'cursor-not-allowed');
+            if (rightButton && wrongButton) {
+                rightButton.disabled = true;
+                wrongButton.disabled = true;
+                rightButton.classList.add('opacity-50', 'cursor-not-allowed');
+                wrongButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
 
             // Ensure the card is flipped to show the answer before animation
             if (!cardFlipped) {
                  quizCard.classList.add('flipped');
-                 cardFlipped = true;
+                 cardFlipped = true; // Update state
             }
-
 
             const currentCard = quizCard;
             // Apply slide out animation
@@ -594,51 +575,57 @@
                 currentCard.classList.add('slide-out-left');
             }
 
-            // Wait for animation to finish before loading next question
+            // Wait for animation to finish
             setTimeout(() => {
-                currentCard.classList.remove('slide-out-left', 'slide-out-right'); // Remove slide animation class
-                 currentCard.classList.remove('flipped'); // Unflip the card for the next question animation
+                // Clean up animation classes and unflip the card visually
+                currentCard.classList.remove('slide-out-left', 'slide-out-right', 'flipped');
+                 cardFlipped = false; // Update state after removing flipped class
 
 
                 currentQuestionIndex++;
 
                 if (currentQuestionIndex < currentQuestions.length) {
-                    // Load the next question
+                    // --- Not the last question ---
+                    // Load the next question. loadQuestion will handle button state and card state.
                     loadQuestion();
+
                     // Add pop-in animation for the new card
                     quizCard.classList.add('pop-in');
-                     // Remove pop-in animation after it finishes
-                    setTimeout(() => {
+                    setTimeout(() => { // Timeout specifically for pop-in removal
                         quizCard.classList.remove('pop-in');
                     }, CARD_FLIP_DURATION);
 
                 } else {
-                    // Quiz finished
+                    // --- Quiz finished ---
                     displayResults();
-                    const totalQuestionsAnswered = rightCount + wrongCount; // Should be currentQuestions.length
-                    const percentage = (rightCount / totalQuestionsAnswered) * 100;
+                    const totalQuestionsAnswered = rightCount + wrongCount;
+                    const percentage = totalQuestionsAnswered > 0 ? (rightCount / totalQuestionsAnswered) * 100 : 0;
 
-                    // Update card front with final message and score
+                    // Ensure card front is visible for results
+                    quizCard.classList.remove('flipped');
+                     cardFlipped = false;
+
+
                     questionText.textContent = "A Kvíz befejeződött!";
-                    answerText.textContent = `Helyes válaszok: ${rightCount} / ${totalQuestionsAnswered} (${percentage.toFixed(2)}%)`;
-                     // Hide answer buttons at the end
-                    rightButton.disabled = true;
-                    wrongButton.disabled = true;
-                     //rightButton.style.display = 'none';
-                     //wrongButton.style.display = 'none';
-                     progressText.style.display = 'none';
+                    answerText.textContent = `Helyes válaszok: ${rightCount} / ${currentQuestions.length} (${percentage.toFixed(2)}%)`;
 
-                     // Ensure quiz card is showing results and not flipped back immediately
-                     quizCard.classList.remove('flipped'); // Ensure it's on the front side for results text
-                     // You might want to prevent flipping the results card or handle its click separately
+                    // Hide answer buttons AND THEIR CONTAINER ONLY at the very end of the quiz
+                     if (buttonContainer && rightButton && wrongButton) {
+                        buttonContainer.style.display = 'none'; // Hide the container
+                         // The buttons are children, hiding container hides them too,
+                         // but setting their style explicitly is belt-and-suspenders.
+                         rightButton.style.display = 'none';
+                         wrongButton.style.display = 'none';
+                     }
+                    progressText.style.display = 'none';
                 }
-            }, CARD_FLIP_DURATION); // Timeout matches animation duration
+            }, CARD_FLIP_DURATION);
         }
 
         function displayResults() {
             histogramCanvas.classList.remove('hidden');
             if (chartInstance) {
-                chartInstance.destroy(); // Destroy previous chart instance
+                chartInstance.destroy();
                 chartInstance = null;
             }
 
@@ -650,8 +637,8 @@
                         label: 'Eredmények',
                         data: [rightCount, wrongCount],
                         backgroundColor: [
-                            'rgba(75, 192, 192, 0.6)', // Green-ish
-                            'rgba(255, 99, 132, 0.6)' // Red-ish
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(255, 99, 132, 0.6)'
                         ],
                         borderColor: [
                             'rgba(75, 192, 192, 1)',
@@ -671,21 +658,21 @@
                             }
                         },
                         legend: {
-                            display: false // Hide legend as labels are clear
+                            display: false
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                precision: 0 // Ensure integer ticks
+                                precision: 0
                             },
-                             title: { // Add a Y-axis title
+                             title: {
                                 display: true,
                                 text: 'Válaszok Száma'
                              }
                         },
-                         x: { // Add an X-axis title
+                         x: {
                              title: {
                                 display: true,
                                 text: 'Eredmény Típusa'
@@ -696,71 +683,16 @@
             });
         }
 
-        function displayNoQuestionsError() {
-             quizTitle.textContent = "Hiba";
-             questionText.textContent = "Nincs elérhető kérdés ehhez a kvízhez.";
-             answerText.textContent = "Kérjük, válassz másik kvízt a menüből, vagy ellenőrizd az adatfájlt.";
-             progressText.classList.add('hidden');
-             rightButton.style.display = 'none';
-             wrongButton.style.display = 'none';
-             histogramCanvas.classList.add('hidden');
-             if (chartInstance) {
-                 chartInstance.destroy();
-                 chartInstance = null;
-             }
-             restartButton.classList.add('hidden'); // Hide restart
-             backToMenuButton.classList.remove('hidden'); // Keep back to menu
-             quizCard.classList.remove('hidden'); // Keep card visible to show error message
-             quizCard.classList.remove('flipped'); // Ensure card is on the front
-             // Remove background color classes
-             cardFront.classList.forEach(cls => { if(cls.startsWith('bg-')) cardFront.classList.remove(cls); });
-             cardBack.classList.forEach(cls => { if(cls.startsWith('bg-')) cardBack.classList.remove(cls); });
-             // Optionally set a neutral background for the error state
-             cardFront.classList.add('bg-gray-200', 'text-gray-800');
-             cardBack.classList.add('bg-gray-200', 'text-gray-800'); // Keep back consistent or hide it
-             // Ensure backface visibility allows seeing the front error message
-             cardFront.style.backfaceVisibility = 'visible';
-             cardBack.style.backfaceVisibility = 'hidden'; // Hide back face
-        }
-
-
-        // --- Event Listeners ---
-
-        // Listener for clicking the card to flip
-        quizCard.addEventListener('click', () => {
-             // Only allow flipping if not currently processing an answer animation
-            if (!rightButton.disabled && !wrongButton.disabled) {
-                quizCard.classList.toggle('flipped');
-                cardFlipped = !cardFlipped;
-            }
-        });
-
-        rightButton.addEventListener('click', () => {
-            if (!rightButton.disabled) { // Prevent multiple clicks during animation
-                rightCount++;
-                handleAnswer(true);
-            }
-        });
-
-        wrongButton.addEventListener('click', () => {
-             if (!wrongButton.disabled) { // Prevent multiple clicks during animation
-                wrongCount++;
-                handleAnswer(false);
-            }
-        });
-
         restartButton.addEventListener('click', () => {
-            // Find the manifest entry for the current quiz to get the original data path
             const quizMeta = allQuizzesManifest.find(q => q.key === selectedQuizKey);
              if (!quizMeta || !quizMeta.dataFile) {
                  console.error("Could not find current quiz data for restart.");
-                 // Fallback to going back to menu or showing error
-                 backToMenuButton.click();
+                 displayNoQuestionsError("Hiba az újraindításkor. Nincs adat.");
+                 backToMenuButton.classList.remove('hidden');
+                 restartButton.classList.add('hidden');
                  return;
              }
 
-             // Re-load data (optional, if data might change, otherwise just re-shuffle currentQuestions)
-             // For simplicity in this version, we'll re-fetch.
              loadingIndicator.classList.remove('hidden');
              quizCard.classList.add('hidden');
              progressText.classList.add('hidden');
@@ -773,16 +705,27 @@
                 chartInstance = null;
             }
 
+            // Ensure answer buttons and their container are explicitly visible before loading
+             if (buttonContainer && rightButton && wrongButton) {
+                 buttonContainer.style.display = 'flex'; // Or block
+                 rightButton.style.display = '';
+                 wrongButton.style.display = '';
+                 rightButton.disabled = false; // Enable buttons
+                 wrongButton.disabled = false; // Enable buttons
+                 rightButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                 wrongButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                 cardBack.style.backfaceVisibility = 'hidden'; // Reset backface visibility state
+             }
+
 
              loadQuizData(quizMeta.dataFile)
                 .then(loadedData => {
-                    currentQuestions = loadedData; // Update current questions
-                    // Check if data was loaded successfully after restart
+                    currentQuestions = loadedData;
                     if (!currentQuestions || currentQuestions.length === 0) {
                          loadingIndicator.classList.add('hidden');
                          quizTitle.textContent = `${quizMeta.title}`;
-                         displayNoQuestionsError();
-                         backToMenuButton.classList.remove('hidden'); // Keep back button visible
+                         displayNoQuestionsError(`Nincs elérhető kérdés az újraindításhoz (${quizMeta.dataFile}).`);
+                         backToMenuButton.classList.remove('hidden');
                          return;
                     }
 
@@ -791,61 +734,66 @@
                     progressText.classList.remove('hidden');
                     restartButton.classList.remove('hidden');
                     backToMenuButton.classList.remove('hidden');
-                    quizTitle.textContent = `${quizMeta.title} Kvíz`; // Restore title
+                    quizTitle.textContent = `${quizMeta.title} Kvíz`;
 
                     currentQuestionIndex = 0;
                     rightCount = 0;
                     wrongCount = 0;
-                    selectRandomQuestions(currentQuestions); // Reselect random subset
-                    loadQuestion(); // Load the first question of the new round
+                    selectRandomQuestions(currentQuestions);
+                    loadQuestion(); // This will handle the button state and set up the first card
+
                 })
                 .catch(error => {
                     console.error("Error restarting quiz:", error);
                     loadingIndicator.classList.add('hidden');
                     quizTitle.textContent = 'Hiba Újraindításkor';
                      quizCard.classList.add('hidden');
-                     menuCard.classList.remove('hidden'); // Go back to menu on error
+                     menuCard.classList.remove('hidden');
+                     backToMenuButton.classList.add('hidden');
+                     restartButton.classList.add('hidden');
                      const errorDiv = document.createElement('p');
                      errorDiv.classList.add('text-red-600', 'text-center', 'mt-4');
-                     errorDiv.textContent = `Nem sikerült újraindítani a kvízt: ${quizMeta.title}`;
+                     errorDiv.textContent = `Nem sikerült újraindítani a kvízt: ${quizMeta.title}. Ellenőrizd az adatfájlt.`;
                      menuCard.appendChild(errorDiv);
                 });
         });
 
 
         backToMenuButton.addEventListener('click', () => {
-            // Reset quiz state
             currentQuestionIndex = 0;
             rightCount = 0;
             wrongCount = 0;
-            currentQuestions = []; // Clear questions
+            currentQuestions = [];
             selectedQuizKey = null;
 
-            // Hide quiz elements
             quizCard.classList.add('hidden');
             progressText.classList.add('hidden');
             restartButton.classList.add('hidden');
             backToMenuButton.classList.add('hidden');
             histogramCanvas.classList.add('hidden');
-             // Hide answer buttons just in case
-             rightButton.style.display = '';
-             wrongButton.style.display = '';
+
+             // Ensure answer buttons and their container are reset/visible for next quiz start
+             if (buttonContainer && rightButton && wrongButton) {
+                buttonContainer.style.display = 'flex'; // Or block
+                rightButton.style.display = '';
+                wrongButton.style.display = '';
+                rightButton.disabled = false;
+                wrongButton.disabled = false;
+                rightButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                wrongButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                 cardBack.style.backfaceVisibility = 'hidden'; // Reset backface visibility
+             }
 
 
-            // Destroy chart instance
             if (chartInstance) {
                 chartInstance.destroy();
                 chartInstance = null;
             }
 
-            // Show menu
             menuCard.classList.remove('hidden');
-            quizTitle.textContent = "Nagyi-Kvíz";
+            quizTitle.textContent = "Kvíz Idő!";
         });
 
-        // --- Initialization ---
-
-        // Load the manifest and build the menu when the DOM is fully loaded
         document.addEventListener('DOMContentLoaded', () => {
             loadManifestAndBuildMenu();
         });
