@@ -302,7 +302,7 @@
 
         // Simple CSV parsing - assumes no commas or quotes within fields
         // For more complex CSV, consider a dedicated library
-        function parseCSV(text) {
+        function oldparseCSV(text) {
             const lines = text.trim().split('\n');
             const questions = [];
             // Assuming the first line is a header and skipping it
@@ -320,6 +320,78 @@
             }
             return questions;
         }
+
+        // Handles two columns (Question, Answer) with standard quoting rules
+        // Assumes fields containing commas or double quotes are enclosed in "double quotes".
+        // Assumes internal double quotes are escaped by doubling them ("").
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const questions = [];
+
+            // Process lines, skipping header (assuming first line is header)
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Skip empty lines
+
+                let question = '';
+                let answer = '';
+                let inQuotes = false;
+                let fieldIndex = 0; // 0 for question, 1 for answer
+                let currentField = '';
+
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+
+                    if (char === '"') {
+                        // Handle escaped quotes ""
+                        if (inQuotes && line[j + 1] === '"') {
+                            currentField += '"'; // Add a single quote
+                            j++; // Skip the next quote
+                        } else {
+                            inQuotes = !inQuotes; // Toggle quoting state
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        // Found the separator comma outside of quotes
+                        if (fieldIndex === 0) {
+                            question = currentField;
+                            currentField = ''; // Reset for the next field (answer)
+                            fieldIndex = 1;
+                        } else {
+                             // Should not happen in a 2-column CSV, indicates malformed line
+                             console.warn(`Skipping malformed CSV line (more than 2 fields): ${line}`);
+                             currentField = ''; // Reset and break
+                             break;
+                        }
+                    } else {
+                        // Add character to the current field
+                        currentField += char;
+                    }
+                }
+
+                // After the loop, the last field's content is in currentField
+                 if (fieldIndex === 1) {
+                     answer = currentField;
+                 } else {
+                      // Handle case where there was no separator, or only one field
+                      console.warn(`Skipping malformed CSV line (could not parse 2 fields): ${line}`);
+                      continue;
+                 }
+
+
+                // Clean up leading/trailing whitespace from final fields
+                question = question.trim();
+                answer = answer.trim();
+
+                // Basic validation - ensure both fields have content
+                if (question && answer) {
+                     questions.push({ question: question, answer: answer });
+                } else {
+                     console.warn(`Skipping line with empty fields after parsing: ${line}`);
+                }
+            }
+            return questions;
+        }
+                         
 
         // --- Core Quiz Logic Functions ---
 
