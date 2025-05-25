@@ -237,11 +237,11 @@
         <div id="quizCard" class="card w-full max-w-md h-64 mb-6 hidden">
             <div class="card-inner">
                 <div class="card-face card-front" id="cardFront">
-                    <h2 class="card-title">Kérdés</h2>
+                    <h2 id=cardFrontTitle class="card-title">Kérdés</h2>
                     <p id="questionText" class="text-lg font-medium p-4"></p>
                 </div>
                 <div class="card-face card-back" id="cardBack">
-                    <h2 class="card-title">Válasz</h2>
+                    <h2 id=cardBackTitle class="card-title">Válasz</h2>
                     <p id="answerText" class="text-lg p-4"></p>
                     <div class="flex flex-col items-center w-full">
                         <button class="result-button right-button" id="rightButton">👍  Eltaláltam </button>
@@ -590,6 +590,7 @@
             }
 
             const currentQuestion = currentQuestions[currentQuestionIndex];
+            cardFrontTitle.textContent = "Kérdés";
             questionText.textContent = currentQuestion.question;
             answerText.textContent = currentQuestion.answer;
 
@@ -672,13 +673,15 @@
 
                 } else {
                     // Quiz finished
-                    displayResults();
+                    //displayResults();
                     const totalQuestionsAnswered = rightCount + wrongCount; // Should be currentQuestions.length
                     const percentage = (rightCount / totalQuestionsAnswered) * 100;
 
                     // Update card front with final message and score
-                    questionText.textContent = "A Kvíz befejeződött!";
-                    answerText.textContent = `Helyes válaszok: ${rightCount} / ${totalQuestionsAnswered} (${percentage.toFixed(2)}%)`;
+                    cardFrontTitle.textContent = "A Kvíz befejeződött!";
+                    //questionText.textContent = "A Kvíz befejeződött!";
+                    questionText.textContent = `Helyes válaszok: ${rightCount}\nHelytelen válaszok: ${wrongCount} `;
+                    //answerText.textContent = `Helyes válaszok: ${rightCount} / ${totalQuestionsAnswered} (${percentage.toFixed(2)}%)`;
                      // Hide answer buttons at the end
                     rightButton.disabled = true;
                     wrongButton.disabled = true;
