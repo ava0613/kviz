@@ -23,5 +23,10 @@
     "key": "worldLiterature",
     "title": "Világirodalom",
     "dataFile": "worldLiterature.csv"
+  },
+  {
+    "key": "bible",
+    "title": "Kérdések a Bibliából",
+    "dataFile": "bible.csv"
   }
 ]
